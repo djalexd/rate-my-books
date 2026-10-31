@@ -1,9 +1,0 @@
-dropbox
-requests
-beautifulsoup4
-elasticsearch
-numpy
-rapidfuzz
-pyyaml
-pytest
-mypy

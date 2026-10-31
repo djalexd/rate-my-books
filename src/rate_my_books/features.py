@@ -1,18 +1,19 @@
 """Sparse-ish book vectors: IDF-weighted subjects and authors, plus a quality score."""
+
 import math
 from collections import Counter
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
-from recommender.catalog import Book
-from recommender.text import normalize
+from rate_my_books.catalog import Book
+from rate_my_books.text import normalize
 
 SUBJECT_PREFIX = 's:'
 AUTHOR_PREFIX = 'a:'
 
 
-def tokens(book: Book) -> List[str]:
+def tokens(book: Book) -> list[str]:
     found = [SUBJECT_PREFIX + s for s in book.subjects]
     if book.author:
         found.append(AUTHOR_PREFIX + normalize(book.author))
@@ -37,12 +38,11 @@ class FeatureSpace:
         df = Counter(t for book in corpus for t in set(tokens(book)))
         n = len(corpus)
         kept = sorted(t for t, c in df.items() if c >= min_df and c / n <= max_df_ratio)
-        self.vocab: Dict[str, int] = {t: i for i, t in enumerate(kept)}
-        self.names: List[str] = kept
-        self.weights = np.array([
-            math.log(n / df[t]) * (author_weight if t.startswith(AUTHOR_PREFIX) else 1.0)
-            for t in kept
-        ])
+        self.vocab: dict[str, int] = {t: i for i, t in enumerate(kept)}
+        self.names: list[str] = kept
+        self.weights = np.array(
+            [math.log(n / df[t]) * (author_weight if t.startswith(AUTHOR_PREFIX) else 1.0) for t in kept]
+        )
 
     def vectorize(self, book: Book) -> np.ndarray:
         vec = np.zeros(len(self.vocab))
@@ -63,5 +63,5 @@ def quality(book: Book, prior_mean: float, prior_weight: float = 200.0) -> float
 
 
 def mean_rating(books: Sequence[Book], default: float = 3.8) -> float:
-    rated: List[Optional[float]] = [b.rating for b in books if b.rating]
+    rated: list[float | None] = [b.rating for b in books if b.rating]
     return float(sum(r for r in rated if r) / len(rated)) if rated else default

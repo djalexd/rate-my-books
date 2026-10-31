@@ -1,6 +1,5 @@
 import re
 import unicodedata
-from typing import Optional, Tuple
 
 
 def normalize(text: str) -> str:
@@ -10,7 +9,7 @@ def normalize(text: str) -> str:
     return re.sub(r'\s+', ' ', re.sub(r'[^\w\s]', ' ', stripped.lower())).strip()
 
 
-def split_title_author(name: str) -> Tuple[str, Optional[str]]:
+def split_title_author(name: str) -> tuple[str, str | None]:
     """Split a 'Title - Author' file name; the author is whatever follows the last ' - '."""
     if ' - ' not in name:
         return name.strip(), None

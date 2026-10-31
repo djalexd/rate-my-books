@@ -1,7 +1,7 @@
 """Goodreads search-page scraping, shared by rate.py."""
+
 import logging
 import re
-from typing import Optional, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -9,19 +9,22 @@ from bs4 import BeautifulSoup
 HEADERS = {
     'Accept': 'text/html',
     'Accept-Encoding': 'gzip, deflate',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    'User-Agent': (
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+    ),
 }
-_RATING_PATTERN = re.compile(r"(\d+\.\d+)\s+avg rating\s+—\s+([\d,]+)\s+ratings")
+_RATING_PATTERN = re.compile(r'(\d+\.\d+)\s+avg rating\s+—\s+([\d,]+)\s+ratings')
 
 
-def extract_rating_and_count(text: str) -> Tuple[Optional[float], Optional[int]]:
+def extract_rating_and_count(text: str) -> tuple[float | None, int | None]:
     match = _RATING_PATTERN.search(text)
     if not match:
         return None, None
     return float(match.group(1)), int(match.group(2).replace(',', ''))
 
 
-def get_best_rating(name: str) -> Tuple[float, int]:
+def get_best_rating(name: str) -> tuple[float, int]:
     """Rating and rating count of the first Goodreads search hit.
 
     Returns (-1.0, 0) when the request fails (so it can be retried later) and

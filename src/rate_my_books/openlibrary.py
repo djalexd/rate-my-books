@@ -1,33 +1,42 @@
 """Thin client for the Open Library search API (subjects, ratings, authors)."""
+
 import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 from rapidfuzz import fuzz
 
-from recommender.text import normalize
+from rate_my_books.text import normalize
 
 SEARCH_URL = 'https://openlibrary.org/search.json'
 FIELDS = 'title,author_name,subject,ratings_average,ratings_count'
 _JUNK_SUBJECT_PREFIXES = (
-    'nyt:', 'open_syllabus', 'translations', 'accessible book', 'protected daisy',
-    'lending library', 'in library', 'large type', 'reading level', 'internet archive',
+    'nyt:',
+    'open_syllabus',
+    'translations',
+    'accessible book',
+    'protected daisy',
+    'lending library',
+    'in library',
+    'large type',
+    'reading level',
+    'internet archive',
 )
 
 
 @dataclass(frozen=True)
 class OpenLibraryBook:
     title: str
-    author: Optional[str]
-    subjects: List[str]
-    rating: Optional[float]
-    rating_count: Optional[int]
+    author: str | None
+    subjects: list[str]
+    rating: float | None
+    rating_count: int | None
 
 
-def _clean_subjects(subjects: List[str]) -> List[str]:
+def _clean_subjects(subjects: list[str]) -> list[str]:
     """Open Library subjects fuse several tags ('fiction, science fiction, general') and
     carry parenthetical notes; split them into plain lowercase tags."""
     cleaned = set()
@@ -41,7 +50,7 @@ def _clean_subjects(subjects: List[str]) -> List[str]:
     return sorted(cleaned)
 
 
-def _search(params: Dict[str, Any]) -> List[OpenLibraryBook]:
+def _search(params: dict[str, Any]) -> list[OpenLibraryBook]:
     try:
         r = requests.get(
             SEARCH_URL,
@@ -62,16 +71,20 @@ def _search(params: Dict[str, Any]) -> List[OpenLibraryBook]:
             rating=d.get('ratings_average'),
             rating_count=d.get('ratings_count'),
         )
-        for d in docs if d.get('title')
+        for d in docs
+        if d.get('title')
     ]
 
 
-def _author_subjects(title: str, author: str, max_subjects: int = 8) -> Optional[OpenLibraryBook]:
+def _author_subjects(title: str, author: str, max_subjects: int = 8) -> OpenLibraryBook | None:
     """Stand-in for a book Open Library only knows under another title (typically a translation):
     the subjects most common across the author's works. Rating is left unknown."""
     wanted = normalize(author)
-    works = [b for b in _search({'author': author, 'limit': 25})
-             if b.author and fuzz.ratio(wanted, normalize(b.author)) >= 85]
+    works = [
+        b
+        for b in _search({'author': author, 'limit': 25})
+        if b.author and fuzz.ratio(wanted, normalize(b.author)) >= 85
+    ]
     counts = Counter(s for w in works for s in set(w.subjects))
     common = [s for s, c in counts.most_common() if c >= 2][:max_subjects]
     if not common:
@@ -79,9 +92,9 @@ def _author_subjects(title: str, author: str, max_subjects: int = 8) -> Optional
     return OpenLibraryBook(title=title, author=author, subjects=common, rating=None, rating_count=None)
 
 
-def find_book(title: str, author: Optional[str] = None) -> Optional[OpenLibraryBook]:
+def find_book(title: str, author: str | None = None) -> OpenLibraryBook | None:
     """Best title match among the top hits, else the author's typical subjects; None if neither."""
-    params: Dict[str, Any] = {'title': title, 'limit': 5}
+    params: dict[str, Any] = {'title': title, 'limit': 5}
     if author:
         params['author'] = author
     wanted = normalize(title)
@@ -97,6 +110,6 @@ def find_book(title: str, author: Optional[str] = None) -> Optional[OpenLibraryB
     return best or fallback
 
 
-def books_for_subject(subject: str, limit: int = 30) -> List[OpenLibraryBook]:
+def books_for_subject(subject: str, limit: int = 30) -> list[OpenLibraryBook]:
     """Highest-rated English books for a subject."""
     return _search({'q': f'subject:"{subject}" language:eng', 'sort': 'rating', 'limit': limit})

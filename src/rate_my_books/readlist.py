@@ -9,15 +9,15 @@ A note counts as a book when its YAML frontmatter has a `title`:
     read_date: 2026-10-01   # optional
     ---
 """
+
 import re
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 
-from recommender.text import normalize
+from rate_my_books.text import normalize
 
 _FRONTMATTER = re.compile(r'\A---\s*\n(.*?)\n---\s*(?:\n|\Z)', re.DOTALL)
 
@@ -25,13 +25,13 @@ _FRONTMATTER = re.compile(r'\A---\s*\n(.*?)\n---\s*(?:\n|\Z)', re.DOTALL)
 @dataclass(frozen=True)
 class ReadEntry:
     title: str
-    author: Optional[str]
-    rating: Optional[float]
-    read_date: Optional[date]
+    author: str | None
+    rating: float | None
+    read_date: date | None
     path: Path
 
 
-def _parse_note(path: Path) -> Optional[ReadEntry]:
+def _parse_note(path: Path) -> ReadEntry | None:
     match = _FRONTMATTER.match(path.read_text(encoding='utf-8'))
     if not match:
         return None
@@ -57,12 +57,12 @@ def _parse_note(path: Path) -> Optional[ReadEntry]:
     )
 
 
-def load_readlist(directory: Path) -> List[ReadEntry]:
+def load_readlist(directory: Path) -> list[ReadEntry]:
     entries = (_parse_note(p) for p in sorted(directory.rglob('*.md')))
     return [e for e in entries if e is not None]
 
 
-def _same_book(entry: ReadEntry, title: str, author: Optional[str]) -> bool:
+def _same_book(entry: ReadEntry, title: str, author: str | None) -> bool:
     if normalize(entry.title) != normalize(title):
         return False
     return not (author and entry.author) or normalize(author) == normalize(entry.author)
@@ -71,15 +71,15 @@ def _same_book(entry: ReadEntry, title: str, author: Optional[str]) -> bool:
 def add_entry(
     directory: Path,
     title: str,
-    author: Optional[str] = None,
-    rating: Optional[float] = None,
-    read_date: Optional[date] = None,
+    author: str | None = None,
+    rating: float | None = None,
+    read_date: date | None = None,
 ) -> Path:
     """Write one note for the book; returns the existing note if the book is already listed."""
     for entry in load_readlist(directory):
         if _same_book(entry, title, author):
             return entry.path
-    meta = {'title': title}
+    meta: dict[str, str | float | date] = {'title': title}
     if author:
         meta['author'] = author
     if rating is not None:
