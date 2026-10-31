@@ -20,4 +20,4 @@ with open(args.ratings_path, 'r') as fd:
     
     sorted_books = sorted(rated_books, key=adjust_rating, reverse=True)
     for index, book in enumerate([b for b in sorted_books if b['rating'] > 0.0]):
-        print '%2d. %s - %.2f (from %s)' % (index, book['name'], adjust_rating(book), book['ratings_count']) 
+        print('%2d. %s - %.2f (from %s)' % (index, book['name'], adjust_rating(book), book['ratings_count']))
