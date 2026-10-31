@@ -102,3 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# gradle / kotlin
+.gradle/
+.kotlin/
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
