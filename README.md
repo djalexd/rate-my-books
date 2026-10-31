@@ -12,6 +12,18 @@ uv run rate-my-books --help
 
 You also need a Dropbox app access token for the `rate` command, and a read-list directory (below).
 
+## configuration
+`ACCESS_TOKEN` (Dropbox, for `rate`) and `READLIST_DIR` (for `taste`, `next` and `add`) can be set in the environment
+or in a `.env` file in the working directory (see `.env.example`; `--env-file PATH` before the command picks another):
+
+```
+ACCESS_TOKEN=op://Private/Dropbox/token
+READLIST_DIR=~/path/to/vault/books
+```
+A value starting with `op://` is read from 1Password with the [`op` CLI](https://developer.1password.com/docs/cli/)
+(`op read`), and only for the commands that need it. The real environment wins over `.env`, and command-line flags win
+over both.
+
 ## 1. rate the library
 `ACCESS_TOKEN=<dropbox token> uv run rate-my-books rate --path <path_in_dropbox> --ratings ratings.json`
 

@@ -15,8 +15,8 @@ description: One-time setup of the rate-my-books project. Use when the user want
    ```
    uv run pytest && uv run mypy && uv run ruff check . && uv run ruff format --check .
    ```
-4. Tell the user what the commands need (do not set these for them):
+4. Tell the user what the commands need (do not set these for them). Either export them or put them in `.env`
+   (template: `.env.example`); a value like `op://vault/item/field` is read from 1Password with the `op` CLI:
    - `READLIST_DIR`: the Obsidian directory with one note per read book. Ask the user for the path; it is not known.
-     `export READLIST_DIR=~/path/to/vault/books`
-   - `ACCESS_TOKEN`: a Dropbox app access token, only for `rate`. Never ask for it or print it; the user exports it.
+   - `ACCESS_TOKEN`: a Dropbox app access token, only for `rate`. Never ask for it, read `.env` or print it.
 5. Next step: the `rate-my-books` skill (`rate` first, then `taste`/`next`).
