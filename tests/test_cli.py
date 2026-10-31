@@ -1,6 +1,7 @@
 import importlib
 from datetime import date
 from pathlib import Path
+from typing import NoReturn
 
 import pytest
 
@@ -71,3 +72,47 @@ def test_rate_requires_dropbox_token(monkeypatch: pytest.MonkeyPatch, capsys: py
     monkeypatch.delenv('ACCESS_TOKEN', raising=False)
     assert cli.main(['rate', '--path', '/books']) == 1
     assert 'ACCESS_TOKEN' in capsys.readouterr().err
+
+
+def test_rate_reads_token_from_env_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.delenv('ACCESS_TOKEN', raising=False)
+    (tmp_path / '.env').write_text('ACCESS_TOKEN=from-file\n')
+    seen: dict[str, str] = {}
+
+    def fake_rate(token: str, path: str, limit: int | None) -> list[RatedBook]:
+        seen['token'] = token
+        return []
+
+    monkeypatch.setattr(cli, 'rate_library', fake_rate)
+    assert cli.main(['rate', '--path', '/books']) == 0
+    assert seen['token'] == 'from-file'
+
+
+def test_view_never_touches_1password(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    (tmp_path / '.env').write_text('ACCESS_TOKEN=op://Private/Dropbox/token\n')
+    save_ratings([], tmp_path / 'ratings.json')
+
+    def boom(*args: object, **kwargs: object) -> NoReturn:
+        raise AssertionError('op was called')
+
+    monkeypatch.setattr('rate_my_books.settings.subprocess.run', boom)
+    assert cli.main(['view']) == 0
+
+
+def test_missing_env_file_is_reported(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['--env-file', 'nope.env', 'view']) == 1
+    assert 'nope.env' in capsys.readouterr().err
+
+
+def test_missing_1password_cli_is_reported(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv('ACCESS_TOKEN', raising=False)
+    (tmp_path / '.env').write_text('ACCESS_TOKEN=op://Private/Dropbox/token\n')
+
+    def not_installed(*args: object, **kwargs: object) -> NoReturn:
+        raise FileNotFoundError('op')
+
+    monkeypatch.setattr('rate_my_books.settings.subprocess.run', not_installed)
+    assert cli.main(['rate', '--path', '/books']) == 1
+    assert '1Password CLI' in capsys.readouterr().err

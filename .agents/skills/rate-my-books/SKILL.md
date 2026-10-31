@@ -23,6 +23,8 @@ committed, so if it is missing run `rate` first.
 ## Rules
 - `rate` and `add` have side effects (Dropbox and Goodreads requests; a new note in the user's vault). Confirm before
   running them, and never ask for or print `ACCESS_TOKEN`.
+- Settings come from the environment or `.env` (`--env-file PATH` goes before the command). Never read `.env` or print
+  values resolved from 1Password (`op://`); an `op` error is the user's to fix (sign in, install the CLI).
 - If `READLIST_DIR` is unset, ask the user for the path; do not guess.
 - The first `taste`/`next` run over a large library is slow (Open Library lookups); later runs use `.cache/`.
 - Pick `taste` for "what suits me", `next` for "what should I read after what I just finished".

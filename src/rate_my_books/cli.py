@@ -8,7 +8,6 @@ rate-my-books add --title ... --author ... --rating 4     # record a finished bo
 """
 
 import argparse
-import os
 import sys
 from collections.abc import Sequence
 from datetime import date
@@ -18,6 +17,7 @@ from rate_my_books.model import Mode, Params, Pick
 from rate_my_books.rating import load_ratings, rate_library, save_ratings
 from rate_my_books.readlist import add_entry
 from rate_my_books.service import recommend_books
+from rate_my_books.settings import Settings, SettingsError
 from rate_my_books.viewer import adjusted_rating, ranked
 
 
@@ -37,6 +37,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog='rate-my-books', description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument(
+        '--env-file',
+        type=Path,
+        help='read ACCESS_TOKEN and READLIST_DIR from this file (default: .env if present); '
+        'values like op://vault/item/field are read from 1Password',
+    )
     sub = parser.add_subparsers(dest='command', required=True)
 
     rate = sub.add_parser('rate', help='look up Goodreads ratings for the books in a Dropbox folder')
@@ -51,7 +57,6 @@ def _build_parser() -> argparse.ArgumentParser:
         p = sub.add_parser(mode.value, help=f'recommend ({mode.value} mode)')
         p.add_argument(
             '--readlist-dir',
-            default=os.environ.get('READLIST_DIR'),
             help='Obsidian directory with one note per read book (or set READLIST_DIR)',
         )
         p.add_argument('--ratings', type=Path, default=Path('ratings.json'), help='output of `rate` for the library')
@@ -66,7 +71,7 @@ def _build_parser() -> argparse.ArgumentParser:
         )
 
     add = sub.add_parser('add', help='record a book you finished in the read-list')
-    add.add_argument('--readlist-dir', default=os.environ.get('READLIST_DIR'))
+    add.add_argument('--readlist-dir')
     add.add_argument('--title', required=True)
     add.add_argument('--author')
     add.add_argument('--rating', type=float)
@@ -87,11 +92,18 @@ def _readlist_dir(raw: str | None) -> Path | None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    try:
+        return _run(args, Settings.load(args.env_file))
+    except SettingsError as e:
+        print(e, file=sys.stderr)
+        return 1
 
+
+def _run(args: argparse.Namespace, settings: Settings) -> int:
     if args.command == 'rate':
-        token = os.environ.get('ACCESS_TOKEN')
+        token = settings.get('ACCESS_TOKEN')
         if not token:
-            print('No ACCESS_TOKEN environment var specified', file=sys.stderr)
+            print('No ACCESS_TOKEN specified: set it in the environment or .env', file=sys.stderr)
             return 1
         books = rate_library(token, args.path, args.limit)
         save_ratings(books, args.ratings)
@@ -103,7 +115,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f'{i:2d}. {book.name} - {adjusted_rating(book):.2f} (from {book.ratings_count})')
         return 0
 
-    readlist_dir = _readlist_dir(args.readlist_dir)
+    readlist_dir = _readlist_dir(args.readlist_dir or settings.get('READLIST_DIR'))
     if readlist_dir is None:
         return 1
 
