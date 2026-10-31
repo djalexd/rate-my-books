@@ -16,7 +16,8 @@ You also need a Dropbox app access token for the `rate` command, and a read-list
 `ACCESS_TOKEN=<dropbox token> uv run rate-my-books rate --path <path_in_dropbox> --ratings ratings.json`
 
 Goes over every `.mobi` file in the Dropbox folder, looks up its Goodreads average rating and rating
-count, and stores them in `ratings.json` (`rating` 0 = not found, -1 = request failed).
+count, and stores them in `ratings.json` (`rating` 0 = not found, -1 = request failed). The file is
+generated and not committed, so run this once before `view`, `taste` or `next`.
 `uv run rate-my-books view --ratings ratings.json` prints them ranked.
 
 ## 2. keep a read-list
