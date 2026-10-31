@@ -60,6 +60,10 @@ uv run ruff check . && uv run ruff format --check .
 ```
 Code is in `src/rate_my_books/`, tests in `tests/`.
 
+## agents
+`AGENTS.md` has the conventions for coding agents. Skills for setting up and running the commands are in
+`.agents/skills/` (`.claude/skills` links to it).
+
 ## other
 `indexing/` is a Kotlin (Gradle) module that indexes books into Elasticsearch; `docker-compose.yaml`
 starts Elasticsearch and Kibana for it.
