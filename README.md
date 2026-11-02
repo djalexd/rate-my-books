@@ -41,11 +41,19 @@ title: The Aleph
 author: Jorge Luis Borges
 rating: 5               # 1-5, optional
 read_date: 2026-10-01   # optional, used by `next`
+dropbox_path: /books/Read/The Aleph - Jorge Luis Borges.mobi   # optional, set by `import`
 ---
 ```
 
 Add a book from the command line (does nothing if it is already listed):
 `uv run rate-my-books add --title "The Aleph" --author "Jorge Luis Borges" --rating 5`
+
+Or import the books you already read from a Dropbox folder (`ACCESS_TOKEN` needed):
+`uv run rate-my-books import --path /books/Read --dry-run` prints what it would write; drop `--dry-run` to write it.
+Each `Title - Author.mobi` file becomes a note with a normalized `title` and `author` plus its `dropbox_path`
+(`Title_Surname_Name.pdf` works too; `.mobi`, `.epub`, `.azw3` and `.pdf` are imported). Notes get no `rating` and
+no `read_date`, because Dropbox knows neither: add them by hand so `taste` and `next` can use them. Books already in
+the read-list (same Dropbox file, or same title and author) are skipped, so it is safe to re-run.
 
 ## 3. get recommendations
 ```

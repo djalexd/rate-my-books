@@ -28,8 +28,8 @@ Run all of them before finishing a change.
 - Do not commit `ratings.json` or `.cache/` (generated).
 - Never ask for, print or store the Dropbox token (`ACCESS_TOKEN`); the user exports it or puts it in `.env`.
   Never `cat`/read `.env` or print a value resolved from 1Password (`op://`).
-- `rate` calls Dropbox and Goodreads, and `add` writes a note into the user's Obsidian vault
-  (`READLIST_DIR`). Confirm with the user before running either.
+- `rate` calls Dropbox and Goodreads, and `add` and `import` write notes into the user's Obsidian vault
+  (`READLIST_DIR`). Confirm with the user before running them (`import --dry-run` writes nothing).
 
 ## Skills
 - `rate-my-books-setup`: first-time setup.

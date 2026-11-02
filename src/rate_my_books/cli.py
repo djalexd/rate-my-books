@@ -5,6 +5,7 @@ rate-my-books view --ratings ratings.json                 # library ranked by Go
 rate-my-books taste                                       # best fits for your overall taste
 rate-my-books next                                        # builds on what you read recently
 rate-my-books add --title ... --author ... --rating 4     # record a finished book
+rate-my-books import --path /books/Read --dry-run         # read-list notes from a Dropbox folder
 """
 
 import argparse
@@ -13,6 +14,7 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
+from rate_my_books.importer import import_books, list_books
 from rate_my_books.model import Mode, Params, Pick
 from rate_my_books.rating import load_ratings, rate_library, save_ratings
 from rate_my_books.readlist import add_entry
@@ -76,6 +78,11 @@ def _build_parser() -> argparse.ArgumentParser:
     add.add_argument('--author')
     add.add_argument('--rating', type=float)
     add.add_argument('--date', type=date.fromisoformat, help='YYYY-MM-DD, defaults to today')
+
+    imp = sub.add_parser('import', help='write read-list notes (title, author, Dropbox path) for a Dropbox folder')
+    imp.add_argument('--path', required=True, help='Dropbox folder with the books you read')
+    imp.add_argument('--readlist-dir')
+    imp.add_argument('--dry-run', action='store_true', help='print what would be written, write nothing')
     return parser
 
 
@@ -118,6 +125,20 @@ def _run(args: argparse.Namespace, settings: Settings) -> int:
     readlist_dir = _readlist_dir(args.readlist_dir or settings.get('READLIST_DIR'))
     if readlist_dir is None:
         return 1
+
+    if args.command == 'import':
+        token = settings.get('ACCESS_TOKEN')
+        if not token:
+            print('No ACCESS_TOKEN specified: set it in the environment or .env', file=sys.stderr)
+            return 1
+        results = import_books(readlist_dir, list_books(token, args.path), args.dry_run)
+        for imported, is_new in results:
+            author = f' ({imported.author})' if imported.author else ''
+            print(f'{"+" if is_new else "="} {imported.title}{author}  <- {imported.dropbox_path}')
+        added = sum(is_new for _, is_new in results)
+        verb = 'Would add' if args.dry_run else 'Added'
+        print(f'{verb} {added} notes, {len(results) - added} already listed (= lines)')
+        return 0
 
     if args.command == 'add':
         print(f'Read-list entry: {add_entry(readlist_dir, args.title, args.author, args.rating, args.date)}')
