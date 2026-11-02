@@ -15,14 +15,15 @@ Run everything with `uv run rate-my-books <command>` from the repo root. If the 
 | `taste` | Recommend by overall taste (long-term) | `READLIST_DIR`, `ratings.json` |
 | `next` | Recommend based on recent reads (older reads decay, prefers adjacent books) | `READLIST_DIR`, `ratings.json` |
 | `add --title ...` | Record a finished book as a note in the read-list | `READLIST_DIR` |
+| `import --path <dropbox_path>` | Write read-list notes for the books in a Dropbox folder (`--dry-run` first) | `ACCESS_TOKEN`, `READLIST_DIR` |
 
 ## Flow
 `rate` (once, or when the library changes) → `view` / `taste` / `next`. `ratings.json` is generated and not
 committed, so if it is missing run `rate` first.
 
 ## Rules
-- `rate` and `add` have side effects (Dropbox and Goodreads requests; a new note in the user's vault). Confirm before
-  running them, and never ask for or print `ACCESS_TOKEN`.
+- `rate`, `add` and `import` have side effects (Dropbox and Goodreads requests; new notes in the user's vault). Confirm
+  before running them (`import --dry-run` first), and never ask for or print `ACCESS_TOKEN`.
 - Settings come from the environment or `.env` (`--env-file PATH` goes before the command). Never read `.env` or print
   values resolved from 1Password (`op://`); an `op` error is the user's to fix (sign in, install the CLI).
 - If `READLIST_DIR` is unset, ask the user for the path; do not guess.

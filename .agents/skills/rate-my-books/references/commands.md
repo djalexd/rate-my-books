@@ -23,3 +23,9 @@ the author's most common subjects).
 `--title TITLE` (required) · `--author AUTHOR` · `--rating RATING` (1-5) · `--date YYYY-MM-DD` (default today) ·
 `--readlist-dir READLIST_DIR`. Does nothing if the book is already listed. Notes are markdown with frontmatter
 `title`, `author`, `rating`, `read_date`.
+
+## import
+`--path PATH` (required, Dropbox folder of books already read) · `--readlist-dir READLIST_DIR` · `--dry-run` (print,
+write nothing). Needs `ACCESS_TOKEN`. Writes a note per `.mobi`/`.epub`/`.azw3`/`.pdf` file with normalized `title` and
+`author` and `dropbox_path`, but no `rating` or `read_date`. Skips books already listed. `+` lines are new, `=` lines
+were already listed.
